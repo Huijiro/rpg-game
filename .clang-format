@@ -1,0 +1,4 @@
+# Options are listed here:
+# https://clang.llvm.org/docs/ClangFormatStyleOptions.html
+---
+BasedOnStyle: Chromium
