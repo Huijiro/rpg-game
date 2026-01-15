@@ -23,6 +23,21 @@ target_sources(
 
   ./test_movement.hpp
   ./test_movement.cpp
+
+  ./unit_component.hpp
+  ./unit_component.cpp
+
+  ./health_component.hpp
+  ./health_component.cpp
+
+  ./resource_pool_component.hpp
+  ./resource_pool_component.cpp
+
+  ./attack_component.hpp
+  ./attack_component.cpp
+
+  ./projectile.hpp
+  ./projectile.cpp
 )
 
 target_include_directories(${PROJECT_NAME} PRIVATE "src")

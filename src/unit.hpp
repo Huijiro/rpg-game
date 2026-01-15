@@ -9,14 +9,19 @@
 namespace godot {
 class NavigationAgent3D;
 class Object;
+class Node;
+class StringName;
 }  // namespace godot
 
 using godot::CharacterBody3D;
 using godot::PackedStringArray;
 using godot::String;
+using godot::StringName;
 using godot::Vector3;
 
 class Interactable;
+class HealthComponent;
+class AttackComponent;
 
 class Unit : public CharacterBody3D {
   GDCLASS(Unit, CharacterBody3D)
@@ -60,6 +65,11 @@ class Unit : public CharacterBody3D {
   int32_t get_faction_id() const;
 
   godot::NavigationAgent3D* get_navigation_agent() const;
+
+  // Component lookup helpers
+  godot::Node* get_component_by_class(const StringName& class_name) const;
+  HealthComponent* get_health_component() const;
+  AttackComponent* get_attack_component() const;
 
  private:
   void _cache_navigation_agent();

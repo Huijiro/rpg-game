@@ -1,5 +1,7 @@
 #include "unit.hpp"
 
+#include "attack_component.hpp"
+#include "health_component.hpp"
 #include "interactable.hpp"
 
 #include <cmath>
@@ -11,6 +13,7 @@
 #include <godot_cpp/core/property_info.hpp>
 #include <godot_cpp/variant/packed_string_array.hpp>
 #include <godot_cpp/variant/string.hpp>
+#include <godot_cpp/variant/string_name.hpp>
 #include <godot_cpp/variant/utility_functions.hpp>
 #include <godot_cpp/variant/variant.hpp>
 #include <godot_cpp/variant/vector3.hpp>
@@ -22,10 +25,13 @@ using godot::Engine;
 using godot::MethodInfo;
 using godot::NavigationAgent3D;
 using godot::Node;
+using godot::Object;
 using godot::PackedStringArray;
 using godot::PropertyInfo;
 using godot::String;
+using godot::StringName;
 using godot::Transform3D;
+using godot::UtilityFunctions;
 using godot::Variant;
 using godot::Vector3;
 
@@ -129,43 +135,68 @@ void Unit::_physics_process(double delta) {
     if (attack_target == nullptr || !attack_target->is_inside_tree()) {
       stop_order();
     } else {
-      const Vector3 target_pos = attack_target->get_global_position();
-      desired_location = target_pos;
+      // Check if target is dead
+      HealthComponent* target_health = attack_target->get_health_component();
+      if (target_health != nullptr && target_health->is_dead()) {
+        stop_order();
+      } else {
+        const Vector3 target_pos = attack_target->get_global_position();
+        desired_location = target_pos;
 
-      // Hard stop when within attack range, but keep facing target.
-      Vector3 current_position = get_global_position();
-      Vector3 to_target = target_pos - current_position;
-      to_target.y = 0.0f;
-      const float distance_to_target = to_target.length();
+        // Hard stop when within attack range, but keep facing target.
+        Vector3 current_position = get_global_position();
+        Vector3 to_target = target_pos - current_position;
+        to_target.y = 0.0f;
+        const float distance_to_target = to_target.length();
 
-      // Hysteresis: stop when within range, but resume only when far enough
-      // away. This prevents jitter from continuous start/stop cycles.
-      const float resume_distance = auto_attack_range + attack_buffer_range;
-      if (distance_to_target <= auto_attack_range) {
-        if (distance_to_target > 0.001f) {
-          _face_horizontal_direction(to_target / distance_to_target);
+        // Get attack range from AttackComponent
+        AttackComponent* attack_comp = get_attack_component();
+        float effective_attack_range = auto_attack_range;
+        if (attack_comp != nullptr) {
+          effective_attack_range = attack_comp->get_attack_range();
         }
 
-        // Keep nav target updated so we resume chasing if target moves.
-        Vector3 current_target = navigation_agent->get_target_position();
-        if (!current_target.is_equal_approx(desired_location)) {
-          navigation_agent->set_target_position(desired_location);
-        }
+        // Hysteresis: stop when within range, but resume only when far enough
+        // away. This prevents jitter from continuous start/stop cycles.
+        const float resume_distance =
+            effective_attack_range + attack_buffer_range;
+        if (distance_to_target <= effective_attack_range) {
+          if (distance_to_target > 0.001f) {
+            _face_horizontal_direction(to_target / distance_to_target);
+          }
 
-        // Stop horizontal movement but keep vertical velocity (gravity).
-        set_velocity(Vector3(0, get_velocity().y, 0));
-        move_and_slide();
-        return;
-      } else if (distance_to_target <= resume_distance) {
-        // In the buffer zone: keep moving to create hysteresis.
-        // This prevents the unit from oscillating around attack range.
-        if (distance_to_target > 0.001f) {
-          _face_horizontal_direction(to_target / distance_to_target);
-        }
+          // Keep nav target updated so we resume chasing if target moves.
+          Vector3 current_target = navigation_agent->get_target_position();
+          if (!current_target.is_equal_approx(desired_location)) {
+            navigation_agent->set_target_position(desired_location);
+          }
 
-        Vector3 current_target = navigation_agent->get_target_position();
-        if (!current_target.is_equal_approx(desired_location)) {
-          navigation_agent->set_target_position(desired_location);
+          // Attempt attack
+          if (attack_comp != nullptr) {
+            attack_comp->try_fire_at(attack_target, delta);
+          } else {
+            UtilityFunctions::push_error(
+                "[Unit] ATTACK order requires AttackComponent");
+            stop_order();
+            move_and_slide();
+            return;
+          }
+
+          // Stop horizontal movement but keep vertical velocity (gravity).
+          set_velocity(Vector3(0, get_velocity().y, 0));
+          move_and_slide();
+          return;
+        } else if (distance_to_target <= resume_distance) {
+          // In the buffer zone: keep moving to create hysteresis.
+          // This prevents the unit from oscillating around attack range.
+          if (distance_to_target > 0.001f) {
+            _face_horizontal_direction(to_target / distance_to_target);
+          }
+
+          Vector3 current_target = navigation_agent->get_target_position();
+          if (!current_target.is_equal_approx(desired_location)) {
+            navigation_agent->set_target_position(desired_location);
+          }
         }
       }
     }
@@ -392,4 +423,28 @@ NavigationAgent3D* Unit::_find_navigation_agent() const {
     }
   }
   return nullptr;
+}
+
+Node* Unit::get_component_by_class(const StringName& class_name) const {
+  const int32_t total_children = get_child_count();
+  for (int32_t i = 0; i < total_children; ++i) {
+    Node* child = get_child(i);
+    if (child == nullptr) {
+      continue;
+    }
+    if (child->get_class() == class_name) {
+      return child;
+    }
+  }
+  return nullptr;
+}
+
+HealthComponent* Unit::get_health_component() const {
+  Node* component = get_component_by_class("HealthComponent");
+  return Object::cast_to<HealthComponent>(component);
+}
+
+AttackComponent* Unit::get_attack_component() const {
+  Node* component = get_component_by_class("AttackComponent");
+  return Object::cast_to<AttackComponent>(component);
 }
