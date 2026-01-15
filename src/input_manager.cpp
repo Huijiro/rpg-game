@@ -15,6 +15,7 @@
 #include <godot_cpp/variant/variant.hpp>
 #include <godot_cpp/variant/vector2.hpp>
 
+#include "interactable.hpp"
 #include "unit.hpp"
 
 using godot::ClassDB;
@@ -55,10 +56,6 @@ void InputManager::_bind_methods() {
                        &InputManager::set_raycast_distance);
   ClassDB::bind_method(D_METHOD("get_raycast_distance"),
                        &InputManager::get_raycast_distance);
-
-  ADD_PROPERTY(PropertyInfo(Variant::OBJECT, "controlled_unit",
-                            godot::PROPERTY_HINT_NODE_TYPE, "Unit"),
-               "set_controlled_unit", "get_controlled_unit");
 
   ADD_PROPERTY(PropertyInfo(Variant::OBJECT, "camera",
                             godot::PROPERTY_HINT_NODE_TYPE, "Camera3D"),
@@ -118,10 +115,40 @@ void InputManager::_input(const Ref<InputEvent>& event) {
     return;
   }
 
-  // Try to raycast to ground
   Vector3 click_position;
-  if (_try_raycast_ground(click_position)) {
-    controlled_unit->set_desired_location(click_position);
+  godot::Object* clicked_object = nullptr;
+  if (_try_raycast(click_position, clicked_object)) {
+    if (auto clicked_unit = Object::cast_to<Unit>(clicked_object)) {
+      if (clicked_unit == controlled_unit) {
+        // Ignore right-clicks on the main unit itself.
+        get_viewport()->set_input_as_handled();
+        return;
+      }
+
+      // Allies: do nothing.
+      if (clicked_unit->get_faction_id() == controlled_unit->get_faction_id()) {
+        get_viewport()->set_input_as_handled();
+        return;
+      }
+
+      // Enemies: issue ATTACK order (approach until in range).
+      controlled_unit->issue_attack_order(clicked_unit);
+      UtilityFunctions::print("[InputManager] Issued ATTACK order on: " +
+                              String(clicked_unit->get_name()));
+      get_viewport()->set_input_as_handled();
+      return;
+    }
+
+    if (auto clicked_interactable =
+            Object::cast_to<Interactable>(clicked_object)) {
+      UtilityFunctions::print("[InputManager] Clicked Interactable: " +
+                              String(clicked_interactable->get_name()));
+      get_viewport()->set_input_as_handled();
+      return;
+    }
+
+    // Default: treat as terrain/world click.
+    controlled_unit->issue_move_order(click_position);
     _show_click_marker(click_position);
     get_viewport()->set_input_as_handled();
   }
@@ -167,7 +194,10 @@ Ref<PackedScene> InputManager::get_click_indicator_scene() const {
   return click_indicator_scene;
 }
 
-bool InputManager::_try_raycast_ground(Vector3& out_position) {
+bool InputManager::_try_raycast(Vector3& out_position,
+                                godot::Object*& out_collider) {
+  out_collider = nullptr;
+
   if (camera == nullptr) {
     return false;
   }
@@ -204,16 +234,26 @@ bool InputManager::_try_raycast_ground(Vector3& out_position) {
   // Setup raycast query
   Ref<PhysicsRayQueryParameters3D> query =
       PhysicsRayQueryParameters3D::create(ray_from, ray_to);
+  query->set_collide_with_bodies(true);
+  query->set_collide_with_areas(true);
+
+  // Avoid hitting the player's own unit.
+  if (controlled_unit != nullptr && controlled_unit->is_inside_tree()) {
+    godot::Array exclude;
+    exclude.push_back(controlled_unit->get_rid());
+    query->set_exclude(exclude);
+  }
 
   // Execute raycast
   Dictionary result = physics_state->intersect_ray(query);
 
   if (result.is_empty()) {
+    out_collider = nullptr;
     return false;
   }
 
-  // Get the hit position
   out_position = result["position"];
+  out_collider = result["collider"];
   return true;
 }
 

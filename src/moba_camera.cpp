@@ -85,13 +85,14 @@ void MOBACamera::_ready() {
     camera = memnew(Camera3D);
     add_child(camera);
   }
+
+  // Snap immediately if a target is already set.
+  if (target != nullptr && target->is_inside_tree()) {
+    _update_camera_transform(0.0, true);
+  }
 }
 
-void MOBACamera::_physics_process(double delta) {
-  if (Engine::get_singleton()->is_editor_hint()) {
-    return;
-  }
-
+void MOBACamera::_update_camera_transform(double delta, bool snap) {
   if (target == nullptr || camera == nullptr) {
     return;
   }
@@ -116,26 +117,46 @@ void MOBACamera::_physics_process(double delta) {
   Vector3 camera_offset = Vector3(0, height, horizontal_dist);
   Vector3 desired_position = target_pos + camera_offset;
 
-  // Move camera directly to desired position - don't smooth horizontal movement
-  // Only smooth vertical to prevent jerky height changes
-  Vector3 current_pos = get_global_position();
-  Vector3 new_pos =
-      Vector3(desired_position.x,  // Direct horizontal follow
-              current_pos.y + (desired_position.y - current_pos.y) *
-                                  follow_speed * delta,  // Smooth vertical
-              desired_position.z  // Direct horizontal follow
-      );
+  Vector3 new_pos;
+  if (snap) {
+    new_pos = desired_position;
+  } else {
+    // Move camera directly to desired position - don't smooth horizontal
+    // movement Only smooth vertical to prevent jerky height changes
+    Vector3 current_pos = get_global_position();
+    new_pos =
+        Vector3(desired_position.x,  // Direct horizontal follow
+                current_pos.y + (desired_position.y - current_pos.y) *
+                                    follow_speed * delta,  // Smooth vertical
+                desired_position.z  // Direct horizontal follow
+        );
+  }
   set_global_position(new_pos);
 
   // Look at the target with a slight offset upward so we see more of the world
   Vector3 look_target = target_pos + Vector3(0, 1.5f, 0);
-  if (camera != nullptr) {
-    camera->look_at(look_target, Vector3(0, 1, 0));
+  camera->look_at(look_target, Vector3(0, 1, 0));
+}
+
+void MOBACamera::_physics_process(double delta) {
+  if (Engine::get_singleton()->is_editor_hint()) {
+    return;
   }
+
+  _update_camera_transform(delta, false);
 }
 
 void MOBACamera::set_target(Node3D* new_target) {
   target = new_target;
+
+  if (Engine::get_singleton()->is_editor_hint()) {
+    return;
+  }
+
+  if (is_inside_tree() && target != nullptr && target->is_inside_tree() &&
+      camera != nullptr) {
+    _update_camera_transform(0.0, true);
+  }
 }
 
 Node3D* MOBACamera::get_target() const {

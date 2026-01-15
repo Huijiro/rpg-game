@@ -38,6 +38,8 @@ class MOBACamera : public Node3D {
   float get_pitch_angle() const;
 
  private:
+  void _update_camera_transform(double delta, bool snap);
+
   Node3D* target = nullptr;
   Camera3D* camera = nullptr;
   float distance = 10.0f;     // Distance from target in horizontal plane

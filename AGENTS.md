@@ -27,6 +27,10 @@ The project uses a GDExtension architecture where C++ classes are registered wit
 
 ### Build Commands
 
+This repo uses an **in-source CMake build** (build files live in the repo root).
+Avoid using `cmake -B build` unless you intentionally want a separate build dir,
+as it will force a fresh build of `libs/godot-cpp` in that new directory.
+
 **Debug Build (Recommended for Development)**:
 ```bash
 cmake -S . -DCMAKE_BUILD_TYPE=Debug

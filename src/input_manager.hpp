@@ -14,6 +14,7 @@
 #include <godot_cpp/variant/vector3.hpp>
 
 namespace godot {
+class Object;
 class PhysicsDirectSpaceState3D;
 class Node3D;
 }  // namespace godot
@@ -60,7 +61,7 @@ class InputManager : public Node {
 
  private:
   // Helper methods
-  bool _try_raycast_ground(Vector3& out_position);
+  bool _try_raycast(Vector3& out_position, godot::Object*& out_collider);
   void _show_click_marker(const Vector3& position);
   void _update_click_marker(double delta);
 

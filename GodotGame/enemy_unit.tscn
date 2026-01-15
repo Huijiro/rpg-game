@@ -1,0 +1,12 @@
+[gd_scene load_steps=3 format=3 uid="uid://bmmrao3h54lm8"]
+
+[ext_resource type="PackedScene" uid="uid://bfetb0lq8t6ji" path="res://unit.tscn" id="1_2bn7p"]
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_2bn7p"]
+albedo_color = Color(1, 0, 0, 1)
+
+[node name="Unit" instance=ExtResource("1_2bn7p")]
+faction_id = 1
+
+[node name="MeshInstance3D" parent="." index="1"]
+surface_material_override/0 = SubResource("StandardMaterial3D_2bn7p")

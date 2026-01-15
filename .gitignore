@@ -52,8 +52,3 @@ build.ninja
 # CCache
 .cache
 
-# Godot C++ submodule build artifacts
-libs/godot-cpp/CMakeFiles/
-libs/godot-cpp/cmake_install.cmake
-libs/godot-cpp/.ninja_*
-libs/godot-cpp/build.ninja

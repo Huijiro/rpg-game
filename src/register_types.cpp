@@ -7,6 +7,8 @@
 
 #include "beeper.h"
 #include "input_manager.hpp"
+#include "interactable.hpp"
+#include "match_manager.hpp"
 #include "moba_camera.hpp"
 #include "unit.hpp"
 
@@ -19,8 +21,10 @@ void initialize_example_module(ModuleInitializationLevel p_level) {
 
   GDREGISTER_RUNTIME_CLASS(Beeper)
   GDREGISTER_CLASS(Unit)
+  GDREGISTER_CLASS(Interactable)
   GDREGISTER_CLASS(InputManager)
   GDREGISTER_CLASS(MOBACamera)
+  GDREGISTER_CLASS(MatchManager)
 }
 
 void uninitialize_example_module(ModuleInitializationLevel p_level) {
