@@ -10,3 +10,7 @@ faction_id = 1
 
 [node name="MeshInstance3D" parent="." index="1"]
 surface_material_override/0 = SubResource("StandardMaterial3D_2bn7p")
+
+[node name="TestMovement" type="TestMovement" parent="." index="4"]
+interval_seconds = 1.0
+wander_radius = 10.0

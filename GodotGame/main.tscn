@@ -19,6 +19,7 @@ navigation_mesh = SubResource("NavigationMesh_7dm0k")
 [node name="map" parent="NavigationRegion3D" instance=ExtResource("1_1bvp3")]
 
 [node name="Unit" parent="." instance=ExtResource("2_0xm2m")]
+safe_margin = 0.01
 
 [node name="MatchManager" type="MatchManager" parent="." node_paths=PackedStringArray("main_unit", "player_controller", "moba_camera")]
 main_unit = NodePath("../Unit")

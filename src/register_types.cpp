@@ -10,6 +10,7 @@
 #include "interactable.hpp"
 #include "match_manager.hpp"
 #include "moba_camera.hpp"
+#include "test_movement.hpp"
 #include "unit.hpp"
 
 using namespace godot;
@@ -25,6 +26,7 @@ void initialize_example_module(ModuleInitializationLevel p_level) {
   GDREGISTER_CLASS(InputManager)
   GDREGISTER_CLASS(MOBACamera)
   GDREGISTER_CLASS(MatchManager)
+  GDREGISTER_CLASS(TestMovement)
 }
 
 void uninitialize_example_module(ModuleInitializationLevel p_level) {

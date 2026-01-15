@@ -20,6 +20,9 @@ target_sources(
 
   ./match_manager.hpp
   ./match_manager.cpp
+
+  ./test_movement.hpp
+  ./test_movement.cpp
 )
 
 target_include_directories(${PROJECT_NAME} PRIVATE "src")

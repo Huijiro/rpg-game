@@ -64,6 +64,13 @@ void Unit::_bind_methods() {
   ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "auto_attack_range"),
                "set_auto_attack_range", "get_auto_attack_range");
 
+  ClassDB::bind_method(D_METHOD("set_attack_buffer_range", "buffer"),
+                       &Unit::set_attack_buffer_range);
+  ClassDB::bind_method(D_METHOD("get_attack_buffer_range"),
+                       &Unit::get_attack_buffer_range);
+  ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "attack_buffer_range"),
+               "set_attack_buffer_range", "get_attack_buffer_range");
+
   ClassDB::bind_method(D_METHOD("set_faction_id", "faction_id"),
                        &Unit::set_faction_id);
   ClassDB::bind_method(D_METHOD("get_faction_id"), &Unit::get_faction_id);
@@ -131,6 +138,9 @@ void Unit::_physics_process(double delta) {
       to_target.y = 0.0f;
       const float distance_to_target = to_target.length();
 
+      // Hysteresis: stop when within range, but resume only when far enough
+      // away. This prevents jitter from continuous start/stop cycles.
+      const float resume_distance = auto_attack_range + attack_buffer_range;
       if (distance_to_target <= auto_attack_range) {
         if (distance_to_target > 0.001f) {
           _face_horizontal_direction(to_target / distance_to_target);
@@ -146,6 +156,17 @@ void Unit::_physics_process(double delta) {
         set_velocity(Vector3(0, get_velocity().y, 0));
         move_and_slide();
         return;
+      } else if (distance_to_target <= resume_distance) {
+        // In the buffer zone: keep moving to create hysteresis.
+        // This prevents the unit from oscillating around attack range.
+        if (distance_to_target > 0.001f) {
+          _face_horizontal_direction(to_target / distance_to_target);
+        }
+
+        Vector3 current_target = navigation_agent->get_target_position();
+        if (!current_target.is_equal_approx(desired_location)) {
+          navigation_agent->set_target_position(desired_location);
+        }
       }
     }
   } else if (current_order == OrderType::INTERACT) {
@@ -261,6 +282,17 @@ void Unit::set_auto_attack_range(float new_range) {
 
 float Unit::get_auto_attack_range() const {
   return auto_attack_range;
+}
+
+void Unit::set_attack_buffer_range(float new_buffer) {
+  attack_buffer_range = new_buffer;
+  if (attack_buffer_range < 0.0f) {
+    attack_buffer_range = 0.0f;
+  }
+}
+
+float Unit::get_attack_buffer_range() const {
+  return attack_buffer_range;
 }
 
 void Unit::set_faction_id(int32_t new_faction_id) {

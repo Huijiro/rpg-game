@@ -53,6 +53,9 @@ class Unit : public CharacterBody3D {
   void set_auto_attack_range(float new_range);
   float get_auto_attack_range() const;
 
+  void set_attack_buffer_range(float new_buffer);
+  float get_attack_buffer_range() const;
+
   void set_faction_id(int32_t new_faction_id);
   int32_t get_faction_id() const;
 
@@ -79,6 +82,7 @@ class Unit : public CharacterBody3D {
   float speed = 5.0f;
   float rotation_speed = 10.0f;  // How fast the unit rotates to face direction
   float auto_attack_range = 2.5f;
+  float attack_buffer_range = 0.5f;  // Hysteresis buffer for resuming chase
   int32_t faction_id = 0;
 
   bool is_ready = false;
