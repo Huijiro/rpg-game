@@ -48,6 +48,10 @@ void MovementComponent::_bind_methods() {
   // Bind signal callback method
   ClassDB::bind_method(D_METHOD("_on_owner_unit_died", "source"),
                        &MovementComponent::_on_owner_unit_died);
+
+  // Add signals
+  ADD_SIGNAL(godot::MethodInfo("movement_started"));
+  ADD_SIGNAL(godot::MethodInfo("movement_stopped"));
 }
 
 void MovementComponent::_ready() {
@@ -157,6 +161,15 @@ Vector3 MovementComponent::process_movement(double delta,
   if (distance >= 0.001f || direction.length() > 0.001f) {
     _face_horizontal_direction(direction);
   }
+
+  // Emit movement signals based on velocity state
+  bool is_moving = (velocity.length() > 0.01f);
+  if (is_moving && !was_moving) {
+    emit_signal(StringName("movement_started"));
+  } else if (!is_moving && was_moving) {
+    emit_signal(StringName("movement_stopped"));
+  }
+  was_moving = is_moving;
 
   return velocity;
 }

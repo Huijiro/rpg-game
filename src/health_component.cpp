@@ -45,6 +45,8 @@ void HealthComponent::_bind_methods() {
                                PropertyInfo(Variant::FLOAT, "max")));
   ADD_SIGNAL(
       godot::MethodInfo("died", PropertyInfo(Variant::OBJECT, "source")));
+  ADD_SIGNAL(godot::MethodInfo("damage_taken",
+                               PropertyInfo(Variant::FLOAT, "amount")));
 }
 
 void HealthComponent::set_max_health(float value) {
@@ -78,6 +80,7 @@ bool HealthComponent::apply_damage(float amount, godot::Object* source) {
   }
 
   current_health = std::max(0.0f, current_health - amount);
+  emit_signal("damage_taken", amount);
   emit_signal("health_changed", current_health, max_health);
 
   // Log damage

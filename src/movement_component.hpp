@@ -24,6 +24,7 @@ class MovementComponent : public NavigationAgent3D {
   float rotation_speed = 10.0f;
   bool is_ready = false;
   int32_t frame_count = 0;
+  bool was_moving = false;  // Track previous movement state for signal emission
 
   // Private helper methods
   void _face_horizontal_direction(const Vector3& direction);

@@ -38,11 +38,14 @@ target_sources(
   ./resource_pool_component.hpp
   ./resource_pool_component.cpp
 
-  ./attack_component.hpp
-  ./attack_component.cpp
+   ./attack_component.hpp
+   ./attack_component.cpp
 
-  ./projectile.hpp
-  ./projectile.cpp
+   ./animation_controller.hpp
+   ./animation_controller.cpp
+
+   ./projectile.hpp
+   ./projectile.cpp
 )
 
 target_include_directories(${PROJECT_NAME} PRIVATE "src")

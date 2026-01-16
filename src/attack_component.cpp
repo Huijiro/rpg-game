@@ -101,6 +101,9 @@ void AttackComponent::_bind_methods() {
   ADD_SIGNAL(godot::MethodInfo("attack_hit",
                                PropertyInfo(Variant::OBJECT, "target"),
                                PropertyInfo(Variant::FLOAT, "damage")));
+  ADD_SIGNAL(
+      godot::MethodInfo("attack_speed_changed",
+                        PropertyInfo(Variant::FLOAT, "speed_multiplier")));
 }
 
 void AttackComponent::_physics_process(double delta) {
@@ -230,6 +233,11 @@ bool AttackComponent::try_fire_at(Unit* target, double delta) {
     }
 
     emit_signal("attack_started", target);
+
+    // Emit speed multiplier for animation synchronization
+    float speed_multiplier = base_attack_time / get_attack_interval();
+    emit_signal("attack_speed_changed", speed_multiplier);
+
     return false;  // Attack hasn't landed yet
   }
 

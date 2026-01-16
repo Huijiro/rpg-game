@@ -5,6 +5,7 @@
 #include <godot_cpp/core/defs.hpp>
 #include <godot_cpp/godot.hpp>
 
+#include "animation_controller.hpp"
 #include "attack_component.hpp"
 #include "beeper.h"
 #include "health_component.hpp"
@@ -38,6 +39,7 @@ void initialize_example_module(ModuleInitializationLevel p_level) {
   GDREGISTER_CLASS(HealthComponent)
   GDREGISTER_CLASS(ResourcePoolComponent)
   GDREGISTER_CLASS(AttackComponent)
+  GDREGISTER_CLASS(AnimationController)
   GDREGISTER_CLASS(Projectile)
 }
 
